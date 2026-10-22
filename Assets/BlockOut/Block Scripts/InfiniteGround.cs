@@ -4,12 +4,14 @@ using UnityEngine;
 
 public class InfiniteGround : MonoBehaviour
 {
-    public Transform player;
-    public Transform mapParent;      // the empty object holding planes
-    public GameObject groundPrefab;  // one plane, same size as map planes
-    public float tileSize = 3f;     // size of ONE plane in world units
-    public int viewRadius = 1;       // how close to the edge before ground spawns (in tiles)
 
+    public Transform player;
+    public Transform mapParent;      // empty object holding your 9 planes
+    public GameObject groundPrefab;  // a duplicate of one map plane
+    public int viewRadius = 1;       // 1 = ground only appears near the map edge
+
+    private float tileSize;
+    private float scaleFactor = 1f;
     private Vector3 origin;
     private List<Bounds> mapBounds = new List<Bounds>();
     private Dictionary<Vector2Int, GameObject> spawned = new Dictionary<Vector2Int, GameObject>();
@@ -18,35 +20,44 @@ public class InfiniteGround : MonoBehaviour
     void Start()
     {
         if (mapParent == null || groundPrefab == null || player == null)
-    {
-        Debug.LogError("InfiniteGround: assign Player, Map Parent and Ground Prefab in the Inspector.");
-        enabled = false;
-        return;
-    }
+        {
+            Debug.LogError("InfiniteGround: assign Player, Map Parent and Ground Prefab in the Inspector.");
+            enabled = false;
+            return;
+        }
 
-    Renderer[] renderers = mapParent.GetComponentsInChildren<Renderer>();
-    if (renderers.Length == 0)
-    {
-        Debug.LogError("InfiniteGround: Map Parent has no planes (renderers) inside it.");
-        enabled = false;
-        return;
-    }
+        Renderer[] renderers = mapParent.GetComponentsInChildren<Renderer>();
+        if (renderers.Length == 0)
+        {
+            Debug.LogError("InfiniteGround: Map Parent has no planes (renderers) inside it.");
+            enabled = false;
+            return;
+        }
 
-    // Measure the real size of one plane
-    tileSize = renderers[0].bounds.size.x;
-    origin = renderers[0].bounds.center;
+        // Measure the real size of one plane
+        tileSize = renderers[0].bounds.size.x;
+        origin = renderers[0].bounds.center;
 
-    if (tileSize < 0.01f)
-    {
-        Debug.LogError("InfiniteGround: detected tile size is 0. Check your planes have a visible mesh.");
-        enabled = false;
-        return;
-    }
+        if (tileSize < 0.01f)
+        {
+            Debug.LogError("InfiniteGround: detected tile size is 0. Check your planes have a visible mesh.");
+            enabled = false;
+            return;
+        }
 
-    foreach (Renderer r in renderers)
-        mapBounds.Add(r.bounds);
+        // Work out how much to stretch the prefab so it matches the map planes
+        MeshFilter mf = groundPrefab.GetComponentInChildren<MeshFilter>();
+        if (mf != null && mf.sharedMesh != null)
+        {
+            float prefabSize = mf.sharedMesh.bounds.size.x * groundPrefab.transform.lossyScale.x;
+            if (prefabSize > 0.01f)
+                scaleFactor = tileSize / prefabSize;
+        }
 
-    Debug.Log("Detected tile size: " + tileSize);
+        foreach (Renderer r in renderers)
+            mapBounds.Add(r.bounds);
+
+        Debug.Log("Detected tile size: " + tileSize);
     }
 
     void Update()
@@ -66,7 +77,10 @@ public class InfiniteGround : MonoBehaviour
 
                 if (IsOnMap(pos)) continue; // never spawn on top of the base map
 
-                spawned.Add(c, Instantiate(groundPrefab, pos, Quaternion.identity, transform));
+                GameObject tile = Instantiate(groundPrefab, pos, Quaternion.identity, transform);
+                Vector3 s = groundPrefab.transform.localScale;
+                tile.transform.localScale = new Vector3(s.x * scaleFactor, s.y, s.z * scaleFactor);
+                spawned.Add(c, tile);
             }
         }
 
