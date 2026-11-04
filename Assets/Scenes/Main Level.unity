@@ -151,6 +151,11 @@ Transform:
   - {fileID: 1921222642}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!4 &567876792 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: dc1c7bd2eed71b945b1827d7b3019b70, type: 3}
+  m_PrefabInstance: {fileID: 1805348078}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &892318280
 GameObject:
   m_ObjectHideFlags: 0
@@ -181,7 +186,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InfiniteGround
   player: {fileID: 1877626223}
-  mapParent: {fileID: 466326369}
+  mapParent: {fileID: 567876792}
   groundPrefab: {fileID: 2980443350104694921, guid: e44eae2c269d1c34d9a1a8013a2e5fec, type: 3}
   viewRadius: 1
 --- !u!4 &892318282
